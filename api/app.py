@@ -3,9 +3,12 @@ import joblib
 import pandas as pd
 
 app = FastAPI()
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 model = joblib.load(
-    '../models/xgboost_model.pkl'
+    BASE_DIR / "models" / "xgboost_model.pkl"
 )
 
 @app.get("/")
