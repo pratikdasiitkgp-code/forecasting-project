@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sales Forecasting System</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: #f4f6f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .result {
+            margin-top: 25px;
+            padding: 18px;
+            background: #eef6ff;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .result h2 {
+            margin: 5px 0;
+        }
+
+        .prediction {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Sales Forecasting</h1>
+
+    <p class="subtitle">
+        Predict future sales using XGBoost
+    </p>
+
+    <form id="predictionForm">
+
+        <div class="form-group">
+            <label>Previous Week Sales (lag_1)</label>
+            <input type="number" id="lag_1" step="any" required>
+        </div>
+
+        <div class="form-group">
+            <label>Sales 7 Weeks Ago (lag_7)</label>
+            <input type="number" id="lag_7" step="any" required>
+        </div>
+
+        <div class="form-group">
+            <label>Sales 30 Weeks Ago (lag_30)</label>
+            <input type="number" id="lag_30" step="any" required>
+        </div>
+
+        <div class="form-group">
+            <label>7-Week Rolling Mean</label>
+            <input type="number" id="rolling_mean_7" step="any" required>
+        </div>
+
+        <div class="form-group">
+            <label>7-Week Rolling Standard Deviation</label>
+            <input type="number" id="rolling_std_7" step="any" required>
+        </div>
+
+        <div class="form-group">
+            <label>Month</label>
+            <input type="number" id="month" min="1" max="12" required>
+        </div>
+
+        <div class="form-group">
+            <label>Week</label>
+            <input type="number" id="week" min="1" max="53" required>
+        </div>
+
+        <div class="form-group">
+            <label>Quarter</label>
+            <input type="number" id="quarter" min="1" max="4" required>
+        </div>
+
+        <div class="form-group">
+            <label>Holiday</label>
+            <select id="is_holiday">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <button type="submit">
+            Predict Sales
+        </button>
+
+    </form>
+
+    <div class="result" id="result">
+        <h2>Predicted Sales</h2>
+        <div class="prediction" id="predictionValue"></div>
+    </div>
+
+    <div class="error" id="error"></div>
+
+</div>
+
+
+<script>
+
+document.getElementById("predictionForm").addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    document.getElementById("error").innerText = "";
+
+    const data = {
+
+        lag_1: parseFloat(document.getElementById("lag_1").value),
+
+        lag_7: parseFloat(document.getElementById("lag_7").value),
+
+        lag_30: parseFloat(document.getElementById("lag_30").value),
+
+        rolling_mean_7:
+            parseFloat(document.getElementById("rolling_mean_7").value),
+
+        rolling_std_7:
+            parseFloat(document.getElementById("rolling_std_7").value),
+
+        month:
+            parseInt(document.getElementById("month").value),
+
+        week:
+            parseInt(document.getElementById("week").value),
+
+        quarter:
+            parseInt(document.getElementById("quarter").value),
+
+        is_holiday:
+            parseInt(document.getElementById("is_holiday").value)
+    };
+
+
+    try {
+
+        const response = await fetch("/predict", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(data)
+
+        });
+
+
+        if (!response.ok) {
+            throw new Error("Prediction request failed");
+        }
+
+
+        const result = await response.json();
+
+
+        document.getElementById("result").style.display = "block";
+
+        document.getElementById("predictionValue").innerText =
+            Number(result.prediction).toLocaleString();
+
+
+    } catch (error) {
+
+        document.getElementById("error").innerText =
+            "Error: Unable to get prediction.";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
